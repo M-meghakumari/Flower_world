@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<!--
+<html lang="en">
+    <head>
+        <title>Create Employee Form using JsonPowerDB Database</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+        <!-- JsonPowerDB (JPDB) Javascript helper library-->
+        <script src="http://login2explore.com/jpdb/resources/js/jpdb-commons.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+    </head>
+
+    <body>
+        <div class="container">
+            <div style="margin-left:17%">
+                <h2>Add Employee</h2>
+            </div>
+
+            <!-- TBD - You can have any of your form here. -->
+            <!-- TBD - The 'name' attribute will become the column name in your relation / table. -->
+            <!-- Employee Form -->
+            <form class="form-horizontal" id="empForm" onsubmit="return mySave();">
+                <div class="form-group">
+                    <label class="control-label col-sm-2" for="empId">Employee_ID*</label>
+                    <div class="col-sm-10">
+                        <input type="text" required class="form-control" id="empId" placeholder="Employee ID" name="empId">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-sm-2" for="empName">Name*</label>
+                    <div class="col-sm-10">
+                        <input type="text" required class="form-control" id="empName" placeholder="Name" name="empName">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-sm-2" for="Male">Gender</label>
+                    <div class="col-sm-10">
+                        <div class="radio" id="empGender">
+                            <label class="radio-inline"><input type="radio" name="empGender" value="Male" checked="checked">Male</label>
+                            <label class="radio-inline"><input type="radio" name="empGender" value="Female">Female</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="dropdown">
+                        <label class="control-label col-sm-2" for="empDepartment">Department_Name</label>
+                        <div class="col-sm-10">
+                            <select class="form-control" id="empDepartment" name='empDepartment'>
+                                <option>JAVA</option>
+                                <option>HR</option>
+                                <option>PHP</option>
+                                <option>UI</option>
+                                <option>ACCOUNTS</option>
+                                <option>OPERATIONS</option>
+                                <option>QA</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-sm-2" for="empSalary">Employee_Basic_Salary*</label>
+                    <div class="col-sm-10">
+                        <input type="number" required class="form-control" id="empSalary" placeholder="Employee Basic Salary" name="empSalary">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-sm-2" for="empAllowance">Employee_Allowance</label>
+                    <div class="col-sm-10">
+                        <input type="number"  class="form-control" id="empAllowance" placeholder="Employee Allowance" name="empAllowance">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-sm-2" for="empDeduction">Employee_Deduction</label>
+                    <div class="col-sm-10">
+                        <input type="number" class="form-control" id="empDeduction" placeholder="Employee Deduction" name="empDeduction" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-10">
+                        <input type="submit" name="submit" value="Submit"/>
+                        <input type="reset" name="reset" value="Reset" onclick="resetFocus();"/>
+                        <span id="empForm-message-line" style="color:red;"></span>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Javascript code for sending form data to JsonPowerDB database -->
+        <script>
+            var apiBaseUrl = "http://api.login2explore.com:5577";    // API Base URL
+            var imlPartUrl = "/api/iml";                           // API End-Point URL
+
+            // TBD Change the dbName and relName with your choice of database name and relation name.
+            var dbName = "company_db";
+            var relName = "emp_rel";
+
+            // TBD replace the connection-token with connection-token taken from JPDB dashboard.
+            var connToken = 90935806|-31948838513454686|90934782;
+
+            // To send and add form data to JPDB instance specified in the apiBaseUrl
+            function mySave() {
+
+                var $form = $("#empForm");
+                var formDataInJson = getFormDataInJson($form);          //jpdb-commons.js method
+                var formJsonStr = JSON.stringify(formDataInJson);
+
+                if (connToken === "" || connToken === 90935806|-31948838513454686|90934782) {
+                    $("#empForm-message-line").html("Invalid Connection Token").fadeIn().delay(2000).fadeOut();
+                    return false;
+                }
+
+                $.ajaxSetup({async: false});
+
+                // The following like will create a put request - jpdb-commons.js method
+                var putReq = createPUTRequest(connToken, formJsonStr, dbName, relName);
+
+                // Sends data to the JPDB server - jpdb-commons.js method
+                var respJson = executeCommand(putReq, apiBaseUrl, imlPartUrl);
+                var status = respJson.status;
+                var statusMsg = "Server Error";
+                if (status === 200) {
+                    statusMsg = respJson.message;
+                }
+                $("#empForm-message-line").html(statusMsg).fadeIn().delay(2000).fadeOut();
+                resetFormData();
+                $.ajaxSetup({async: true});
+                return false;
+            }
+
+            // TBD Your input field Id where you want to shift focus once form data is submitted / reset.
+            function resetFocus() {
+                $("#empId").focus();
+            }
+
+            // TBD Your form fields initialization
+            function resetFormData() {
+                $("#empId").val('');
+                $("#empName").val('');
+                $("#empSalary").val('');
+                $("#empDepartment").val("JAVA");
+                $('input[name="empGender"][value="Male"]').prop('checked', true);
+                $("#empAllowance").val('');
+                $("#empDeduction").val('');
+                resetFocus();
+            }
+            
+         
+        </script>
+    </body>
+</html>
